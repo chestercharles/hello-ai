@@ -30,38 +30,51 @@ const configuration = new Configuration({ apiKey });
 
 const openai = new OpenAIApi(configuration);
 
-const completion = await openai
-  .createChatCompletion({
-    model: "gpt-3.5-turbo",
-    messages: [
-      {
-        role: "user",
-        content:
-          "If I'm throwing a dinner party and a guest brings brie, what kind of cheese should I serve?",
-      },
-    ],
-    functions: [
-      {
-        name: "getWinePairing",
-        description: "Get a wine pairing for a cheese",
-        parameters: {
-          type: "object",
-          properties: {
-            cheese: {
-              type: "string",
-              desciption: "The cheese to get a wine pairing for",
-            },
-          },
-          required: ["cheese"],
+async function sendMessage(message: string) {
+  const completion = await openai
+    .createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You respond in pig latin",
         },
-      },
-    ],
-  })
-  .catch((e) => {
-    console.log(e.message);
-  });
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+      functions: [
+        {
+          name: "getWinePairing",
+          description: "Get a wine pairing for a cheese",
+          parameters: {
+            type: "object",
+            properties: {
+              cheese: {
+                type: "string",
+                desciption: "The cheese to get a wine pairing for",
+              },
+            },
+            required: ["cheese"],
+          },
+        },
+      ],
+    })
+    .catch((e) => {
+      console.log(e.message);
+    });
 
-const completionResponse = completion?.data.choices[0].message;
+  const completionResponseMessage = completion?.data.choices[0].message;
+
+  console.log(completion?.data.choices);
+
+  return completionResponseMessage ?? null;
+}
+
+const completionResponse = await sendMessage(
+  "I'm throwing a party and one of my guests is bringing some brie. What kind of wine should I serve?"
+);
 
 if (!completionResponse) {
   console.log("No response from OpenAI");
